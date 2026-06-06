@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASHRAE 空氣狀態計算器</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background: #f5f4f0;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 1.5rem;
+  }
+
+  .card {
+    background: #fff;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .section-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .field-label {
+    font-size: 15px;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  .pres-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .pres-row input {
+    flex: 1;
+    font-size: 15px;
+    padding: 7px 10px;
+    border: 0.5px solid #ccc;
+    border-radius: 8px;
+    background: #f1efe8;
+    color: #1a1a1a;
+  }
+
+  .pres-row input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #b5d4f4;
+    background: #fff;
+  }
+
+  .pres-unit {
+    font-size: 15px;
+    color: #888;
+    min-width: 20px;
+  }
+
+  .conv-btn {
+    font-size: 13px;
+    padding: 7px 11px;
+    border: 0.5px solid #ccc;
+    border-radius: 8px;
+    background: #f5f4f0;
+    color: #555;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .conv-btn:hover { background: #eae9e4; color: #1a1a1a; }
+
+  .param-block {
+    background: #fff;
+    border: 0.5px solid #ddd;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .param-badge {
+    display: inline-block;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 8px;
+    background: #e6f1fb;
+    color: #0c447c;
+    margin-bottom: 14px;
+  }
+
+  .input-field {
+    width: 100%;
+    font-size: 15px;
+    padding: 8px 10px;
+    border: 0.5px solid #ccc;
+    border-radius: 8px;
+    background: #f1efe8;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+    appearance: auto;
+  }
+
+  .input-field:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #b5d4f4;
+    background: #fff;
+  }
+
+  .num-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .num-row input {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 10px;
+    border: 0.5px solid #ccc;
+    border-radius: 8px;
+    background: #f1efe8;
+    color: #1a1a1a;
+  }
+
+  .num-row input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #b5d4f4;
+    background: #fff;
+  }
+
+  .unit-tag {
+    font-size: 14px;
+    color: #888;
+    min-width: 42px;
+    text-align: right;
+  }
+
+  .hint-box {
+    font-size: 15px;
+    color: #666;
+    border-left: 2px solid #b5d4f4;
+    border-radius: 0 8px 8px 0;
+    padding: 8px 12px;
+    background: #f0f6fd;
+    line-height: 1.6;
+  }
+
+  .calc-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    border: 0.5px solid #85b7eb;
+    border-radius: 10px;
+    background: #e6f1fb;
+    color: #0c447c;
+    cursor: pointer;
+    margin-bottom: 1.1rem;
+  }
+
+  .calc-btn:hover { background: #b5d4f4; }
+  .calc-btn:active { transform: scale(0.99); }
+
+  .error-box {
+    background: #fff0f0;
+    border: 0.5px solid #f5a0a0;
+    color: #a32d2d;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    margin-bottom: 1rem;
+    display: none;
+    line-height: 1.5;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 8px;
+  }
+
+  .res-item {
+    background: #f5f4f0;
+    border-radius: 8px;
+    padding: 11px 13px;
+  }
+
+  .res-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .res-val {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a1a;
+    font-family: 'Courier New', monospace;
+  }
+
+  .res-unit {
+    font-size: 13px;
+    color: #888;
+    font-family: 'Courier New', monospace;
+  }
+
+  .res-sub {
+    font-size: 12px;
+    color: #888;
+    font-family: 'Courier New', monospace;
+    margin-top: 2px;
+  }
+
+  @media (max-width: 480px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ASHRAE 空氣狀態計算器</h1>
+  <p class="subtitle">依據 ASHRAE 標準公式計算濕空氣熱力學性質</p>
+
+  <div class="card">
+    <div class="section-label">環境壓力設定</div>
+    <div class="two-col">
+      <div>
+        <div class="field-label">海拔高度</div>
+        <div class="pres-row">
+          <input type="number" id="altitude" value="0" step="1">
+          <span class="pres-unit">m</span>
+          <button class="conv-btn" onclick="convertAltitude()">↻ 換算</button>
+        </div>
+      </div>
+      <div>
+        <div class="field-label">大氣壓力</div>
+        <div class="pres-row">
+          <input type="number" id="pressure" value="101325" step="1">
+          <span class="pres-unit">Pa</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-bottom:10px">已知空氣狀態 — 兩個條件中必須包含乾球溫度</div>
+  <div class="two-col" style="margin-bottom:1.1rem">
+    <div class="param-block">
+      <div class="param-badge">條件 1</div>
+      <div class="field-label">選擇參數</div>
+      <select class="input-field" id="type1" onchange="onTypeChange(1)">
+        <option value="tdb">乾球溫度 (Tdb)</option>
+        <option value="rh">相對濕度 (RH)</option>
+        <option value="twb">濕球溫度 (Twb)</option>
+        <option value="tdp">露點溫度 (Tdp)</option>
+        <option value="w">濕度比 (W)</option>
+      </select>
+      <div class="field-label">數值</div>
+      <div class="num-row">
+        <input type="number" id="val1" value="25" step="0.1">
+        <span class="unit-tag" id="unit1">°C</span>
+      </div>
+      <div class="hint-box" id="hint1">乾球溫度：最常用的空氣溫度，一般溫度計量測值。範圍建議 -40 ~ 60 °C。</div>
+    </div>
+    <div class="param-block">
+      <div class="param-badge">條件 2</div>
+      <div class="field-label">選擇參數</div>
+      <select class="input-field" id="type2" onchange="onTypeChange(2)">
+        <option value="rh" selected>相對濕度 (RH)</option>
+        <option value="tdb">乾球溫度 (Tdb)</option>
+        <option value="twb">濕球溫度 (Twb)</option>
+        <option value="tdp">露點溫度 (Tdp)</option>
+        <option value="w">濕度比 (W)</option>
+      </select>
+      <div class="field-label">數值</div>
+      <div class="num-row">
+        <input type="number" id="val2" value="50" step="0.1">
+        <span class="unit-tag" id="unit2">%</span>
+      </div>
+      <div class="hint-box" id="hint2">相對濕度：空氣中水蒸氣含量與同溫飽和量的比值。範圍 0 ~ 100 %。</div>
+    </div>
+  </div>
+
+  <div id="error-box" class="error-box"></div>
+
+  <button class="calc-btn" onclick="calculate()">執行 ASHRAE 標準計算</button>
+
+  <div id="results-wrap" style="display:none">
+    <div class="section-label" id="res-label" style="margin-bottom:10px">計算結果</div>
+    <div class="results-grid" id="results-grid"></div>
+  </div>
+</div>
+
+<script>
+const HINTS = {
+  tdb: { unit: '°C',    hint: '乾球溫度：最常用的空氣溫度，一般溫度計量測值。範圍建議 -40 ~ 60 °C。' },
+  rh:  { unit: '%',     hint: '相對濕度：空氣中水蒸氣含量與同溫飽和量的比值。範圍 0 ~ 100 %。' },
+  twb: { unit: '°C',    hint: '濕球溫度：濕紗布包裹的溫度計示值，恆小於等於乾球溫度。' },
+  tdp: { unit: '°C',    hint: '露點溫度：空氣冷卻至開始凝結水珠的溫度，恆小於等於乾球溫度。' },
+  w:   { unit: 'kg/kg', hint: '濕度比（絕對濕度）：每公斤乾空氣中含有的水蒸氣質量，典型值 0.005 ~ 0.025 kg/kg。' }
+};
+
+function onTypeChange(n) {
+  const t1 = document.getElementById('type1').value;
+  const t2 = document.getElementById('type2').value;
+  if (t1 === t2) {
+    const opts = ['tdb','rh','twb','tdp','w'];
+    const other = 'type' + (n === 1 ? 2 : 1);
+    const cur = n === 1 ? t1 : t2;
+    document.getElementById(other).value = opts.find(o => o !== cur);
+    updateHU(n === 1 ? 2 : 1);
+  }
+  updateHU(n);
+}
+
+function updateHU(n) {
+  const t = document.getElementById('type' + n).value;
+  document.getElementById('unit' + n).textContent = HINTS[t].unit;
+  document.getElementById('hint' + n).textContent = HINTS[t].hint;
+}
+
+function convertAltitude() {
+  const alt = parseFloat(document.getElementById('altitude').value) || 0;
+  document.getElementById('pressure').value = (101325 * Math.pow(1 - 2.25577e-5 * alt, 5.25588)).toFixed(1);
+}
+
+function showError(msg) {
+  const b = document.getElementById('error-box');
+  b.textContent = msg; b.style.display = 'block';
+  document.getElementById('results-wrap').style.display = 'none';
+}
+function hideError() { document.getElementById('error-box').style.display = 'none'; }
+
+function satP(T) {
+  return T >= 0
+    ? Math.exp(23.7836 - (3782.89 / (T + 273.15 - 43.765)))
+    : Math.exp(28.5916 - (6148.48 / (T + 273.15)));
+}
+
+function dewPt(pw) {
+  let d = 10;
+  for (let i = 0; i < 60; i++) {
+    const e = satP(d) - pw;
+    if (Math.abs(e) < 0.01) break;
+    d -= e * 0.01;
+  }
+  return d;
+}
+
+function calculate() {
+  hideError();
+  const p  = parseFloat(document.getElementById('pressure').value);
+  const t1 = document.getElementById('type1').value;
+  const v1 = parseFloat(document.getElementById('val1').value);
+  const t2 = document.getElementById('type2').value;
+  const v2 = parseFloat(document.getElementById('val2').value);
+
+  if (isNaN(p) || p <= 0)   { showError('大氣壓力必須大於 0 Pa'); return; }
+  if (isNaN(v1) || isNaN(v2)) { showError('請輸入有效數值'); return; }
+  if (t1 === t2)              { showError('請選擇兩個不同的空氣狀態參數！'); return; }
+  if (t1 !== 'tdb' && t2 !== 'tdb') { showError('兩個條件中必須有一項為乾球溫度 (Tdb)'); return; }
+
+  const tdb = (t1 === 'tdb') ? v1 : v2;
+  const ot  = (t1 === 'tdb') ? t2 : t1;
+  const ov  = (t1 === 'tdb') ? v2 : v1;
+  const Mw  = 0.621945;
+  let W;
+
+  try {
+    if (ot === 'rh') {
+      const rh = ov / 100;
+      if (rh < 0 || rh > 1) { showError('相對濕度必須在 0 ~ 100 之間'); return; }
+      W = Mw * (rh * satP(tdb)) / (p - rh * satP(tdb));
+    } else if (ot === 'twb') {
+      if (ov > tdb) { showError('物理限制：濕球溫度不可大於乾球溫度！'); return; }
+      const s = Mw * satP(ov) / (p - satP(ov));
+      W = (((2501 - 2.381 * ov) * s) - 1.006 * (tdb - ov)) / (2501 + 1.805 * tdb - 4.186 * ov);
+    } else if (ot === 'tdp') {
+      if (ov > tdb) { showError('物理限制：露點溫度不可大於乾球溫度！'); return; }
+      W = Mw * satP(ov) / (p - satP(ov));
+    } else if (ot === 'w') {
+      if (ov < 0) { showError('濕度比不可為負數'); return; }
+      W = ov;
+    }
+
+    if (W < 0) { showError('計算結果濕度比為負，請確認輸入值'); return; }
+
+    const pw  = p * W / (Mw + W);
+    const rh  = Math.min(100, pw / satP(tdb) * 100);
+    let twb   = tdb;
+    for (let i = 0; i < 40; i++) {
+      const s  = Mw * satP(twb) / (p - satP(twb));
+      const Wc = (((2501 - 2.381 * twb) * s) - 1.006 * (tdb - twb)) / (2501 + 1.805 * tdb - 4.186 * twb);
+      const d  = Wc - W;
+      if (Math.abs(d) < 1e-9) break;
+      twb -= d * 500;
+    }
+    const tdp = dewPt(pw);
+    const h   = 1.006 * tdb + W * (2501 + 1.805 * tdb);
+    const v   = (0.287042 * (tdb + 273.15) * (1 + 1.607858 * W) / p) * 1000;
+    const pw_kpa = pw / 1000;
+
+    document.getElementById('res-label').textContent = `計算結果 — 大氣壓力 ${p.toFixed(0)} Pa`;
+
+    const rows = [
+      { label: '乾球溫度 Tdb', val: tdb.toFixed(2),       unit: '°C',    sub: '' },
+      { label: '相對濕度 RH',  val: rh.toFixed(1),        unit: '%',     sub: '' },
+      { label: '濕球溫度 Twb', val: twb.toFixed(2),       unit: '°C',    sub: '' },
+      { label: '露點溫度 Tdp', val: tdp.toFixed(2),       unit: '°C',    sub: '' },
+      { label: '濕度比 W',     val: W.toFixed(5),         unit: 'kg/kg', sub: (W * 1000).toFixed(2) + ' g/kg' },
+      { label: '比焓 h',       val: h.toFixed(2),         unit: 'kJ/kg', sub: '' },
+      { label: '比容 v',       val: v.toFixed(4),         unit: 'm³/kg', sub: '' },
+      { label: '蒸氣分壓 Pw',  val: pw_kpa.toFixed(4),   unit: 'kPa',   sub: '' },
+    ];
+
+    document.getElementById('results-grid').innerHTML = rows.map(r => `
+      <div class="res-item">
+        <div class="res-label">${r.label}</div>
+        <div class="res-val">${r.val} <span class="res-unit">${r.unit}</span></div>
+        ${r.sub ? `<div class="res-sub">${r.sub}</div>` : ''}
+      </div>`).join('');
+
+    document.getElementById('results-wrap').style.display = 'block';
+  } catch(e) {
+    showError('計算錯誤：' + e.message);
+  }
+}
+</script>
+</body>
+</html>
