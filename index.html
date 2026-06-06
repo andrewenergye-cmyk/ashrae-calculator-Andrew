@@ -291,7 +291,7 @@
     </div>
   </div>
 
-  <div class="section-label" style="margin-bottom:10px">已知空氣狀態 — 請輸入任意兩個獨立條件</div>
+  <div class="section-label" style="margin-bottom:10px">已知空氣狀態 — 兩個條件中必須包含乾球溫度</div>
   <div class="two-col" style="margin-bottom:1.1rem">
     <div class="param-block">
       <div class="param-badge">條件 1</div>
@@ -418,38 +418,6 @@ function showError(msg) {
   document.getElementById('results-wrap').style.display = 'none';
 }
 function hideError() { document.getElementById('error-box').style.display = 'none'; }
-
-function satP(T) {
-  const Tk = T + 273.15; // 轉換為絕對溫度 Kelvin
-  if (T >= 0) {
-    // ASHRAE 標準水面飽和蒸汽壓公式 (0 ~ 200°C)，回傳單位：Pa
-    const C8 = -5800.2206, C9 = 1.3914993, C10 = -0.048640239;
-    const C11 = 4.1764768e-5, C12 = -1.4452093e-8, C13 = 6.5459673;
-    return Math.exp(C8/Tk + C9 + C10*Tk + C11*Math.pow(Tk, 2) + C12*Math.pow(Tk, 3) + C13*Math.log(Tk));
-  } else {
-    // ASHRAE 標準冰面飽和蒸汽壓公式 (-100 ~ 0°C)，回傳單位：Pa
-    const C1 = -5674.5359, C2 = 6.3925247, C3 = -0.009677843;
-    const C4 = 0.00000062215701, C5 = 2.0747825e-9, C6 = -9.484024e-13, C7 = 4.1635019;
-    return Math.exp(C1/Tk + C2 + C3*Tk + C4*Math.pow(Tk, 2) + C5*Math.pow(Tk, 3) + C6*Math.pow(Tk, 4) + C7*Math.log(Tk));
-  }
-}
-
-function dewPt(pw) {
-  // ASHRAE 露點溫度精準解析公式（無需使用迴圈迭代）
-  const pw_kpa = pw / 1000; // 公式要求輸入為 kPa
-  const alpha = Math.log(pw_kpa);
-  let tdp;
-  
-  if (pw_kpa >= 0.6112) {
-    // 當露點溫度 >= 0°C
-    tdp = 6.54 + 14.526 * alpha + 0.7389 * Math.pow(alpha, 2) + 0.09486 * Math.pow(alpha, 3) + 0.4569 * Math.pow(pw_kpa, 0.1984);
-  } else {
-    // 當露點溫度 < 0°C
-    tdp = 6.09 + 12.608 * alpha + 0.4959 * Math.pow(alpha, 2);
-  }
-  
-  return tdp;
-}
 
     function calculate() {
         hideError();
