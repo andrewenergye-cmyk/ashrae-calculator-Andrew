@@ -1,254 +1,269 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASHRAE 空氣狀態計算器 by Andrew</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <script src="https://cdn.jsdelivr.net/npm/psychrolib@2.3.0/psychrolib.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASHRAE 空氣狀態計算器 by Andrew</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-  body {
-    font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-    background: #f5f4f0;
-    color: #1a1a1a;
-    min-height: 100vh;
-    padding: 2rem 1rem;
-  }
+        body {
+            font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: #f5f4f0;
+            color: #1a1a1a;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
 
-  .container {
-    max-width: 680px;
-    margin: 0 auto;
-  }
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+        }
 
-  h1 {
-    font-size: 20px;
-    font-weight: 500;
-    color: #1a1a1a;
-    margin-bottom: 6px;
-  }
+        h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
 
-  .subtitle {
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 1.5rem;
-  }
+        .subtitle {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 1.5rem;
+        }
 
-  .card {
-    background: #fff;
-    border: 0.5px solid #ddd;
-    border-radius: 12px;
-    padding: 1.1rem 1.25rem;
-    margin-bottom: 1.1rem;
-  }
+        .card {
+            background: #fff;
+            border: 0.5px solid #ddd;
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 1.1rem;
+        }
 
-  .section-label {
-    font-size: 15px;
-    font-weight: 500;
-    color: #555;
-    margin-bottom: 12px;
-  }
+        .section-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 12px;
+        }
 
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    align-items: end;
-  }
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            align-items: end;
+        }
 
-  .field-label {
-    font-size: 15px;
-    color: #555;
-    margin-bottom: 6px;
-  }
+        .field-label {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 6px;
+        }
 
-  .pres-row {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
+        .pres-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
 
-  .pres-row input {
-    flex: 1;
-    font-size: 15px;
-    padding: 7px 10px;
-    border: 0.5px solid #ccc;
-    border-radius: 8px;
-    background: #f1efe8;
-    color: #1a1a1a;
-  }
+            .pres-row input {
+                flex: 1;
+                font-size: 15px;
+                padding: 7px 10px;
+                border: 0.5px solid #ccc;
+                border-radius: 8px;
+                background: #f1efe8;
+                color: #1a1a1a;
+            }
 
-  .pres-row input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #b5d4f4;
-    background: #fff;
-  }
+                .pres-row input:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 2px #b5d4f4;
+                    background: #fff;
+                }
 
-  .pres-unit {
-    font-size: 15px;
-    color: #888;
-    min-width: 20px;
-  }
+        .pres-unit {
+            font-size: 15px;
+            color: #888;
+            min-width: 20px;
+        }
 
-  .conv-btn {
-    font-size: 13px;
-    padding: 7px 11px;
-    border: 0.5px solid #ccc;
-    border-radius: 8px;
-    background: #f5f4f0;
-    color: #555;
-    cursor: pointer;
-    white-space: nowrap;
-  }
+        .conv-btn {
+            font-size: 13px;
+            padding: 7px 11px;
+            border: 0.5px solid #ccc;
+            border-radius: 8px;
+            background: #f5f4f0;
+            color: #555;
+            cursor: pointer;
+            white-space: nowrap;
+        }
 
-  .conv-btn:hover { background: #eae9e4; color: #1a1a1a; }
+            .conv-btn:hover {
+                background: #eae9e4;
+                color: #1a1a1a;
+            }
 
-  .param-block {
-    background: #fff;
-    border: 0.5px solid #ddd;
-    border-radius: 10px;
-    padding: 14px 16px;
-  }
+        .param-block {
+            background: #fff;
+            border: 0.5px solid #ddd;
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
 
-  .param-badge {
-    display: inline-block;
-    font-size: 15px;
-    font-weight: 500;
-    padding: 4px 12px;
-    border-radius: 8px;
-    background: #e6f1fb;
-    color: #0c447c;
-    margin-bottom: 14px;
-  }
+        .param-badge {
+            display: inline-block;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 8px;
+            background: #e6f1fb;
+            color: #0c447c;
+            margin-bottom: 14px;
+        }
 
-  .input-field {
-    width: 100%;
-    font-size: 15px;
-    padding: 8px 10px;
-    border: 0.5px solid #ccc;
-    border-radius: 8px;
-    background: #f1efe8;
-    color: #1a1a1a;
-    margin-bottom: 10px;
-    appearance: auto;
-  }
+        .input-field {
+            width: 100%;
+            font-size: 15px;
+            padding: 8px 10px;
+            border: 0.5px solid #ccc;
+            border-radius: 8px;
+            background: #f1efe8;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            appearance: auto;
+        }
 
-  .input-field:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #b5d4f4;
-    background: #fff;
-  }
+            .input-field:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px #b5d4f4;
+                background: #fff;
+            }
 
-  .num-row {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin-bottom: 10px;
-  }
+        .num-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 10px;
+        }
 
-  .num-row input {
-    flex: 1;
-    font-size: 16px;
-    font-weight: 500;
-    padding: 8px 10px;
-    border: 0.5px solid #ccc;
-    border-radius: 8px;
-    background: #f1efe8;
-    color: #1a1a1a;
-  }
+            .num-row input {
+                flex: 1;
+                font-size: 16px;
+                font-weight: 500;
+                padding: 8px 10px;
+                border: 0.5px solid #ccc;
+                border-radius: 8px;
+                background: #f1efe8;
+                color: #1a1a1a;
+            }
 
-  .num-row input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #b5d4f4;
-    background: #fff;
-  }
+                .num-row input:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 2px #b5d4f4;
+                    background: #fff;
+                }
 
-  .unit-tag {
-    font-size: 14px;
-    color: #888;
-    min-width: 42px;
-    text-align: right;
-  }
+        .unit-tag {
+            font-size: 14px;
+            color: #888;
+            min-width: 42px;
+            text-align: right;
+        }
 
-  .hint-box {
-    font-size: 15px;
-    color: #666;
-    border-left: 2px solid #b5d4f4;
-    border-radius: 0 8px 8px 0;
-    padding: 8px 12px;
-    background: #f0f6fd;
-    line-height: 1.6;
-  }
+        .hint-box {
+            font-size: 15px;
+            color: #666;
+            border-left: 2px solid #b5d4f4;
+            border-radius: 0 8px 8px 0;
+            padding: 8px 12px;
+            background: #f0f6fd;
+            line-height: 1.6;
+        }
 
-  .calc-btn {
-    width: 100%;
-    padding: 12px;
-    font-size: 15px;
-    font-weight: 500;
-    border: 0.5px solid #85b7eb;
-    border-radius: 10px;
-    background: #e6f1fb;
-    color: #0c447c;
-    cursor: pointer;
-    margin-bottom: 1.1rem;
-  }
+        .calc-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            border: 0.5px solid #85b7eb;
+            border-radius: 10px;
+            background: #e6f1fb;
+            color: #0c447c;
+            cursor: pointer;
+            margin-bottom: 1.1rem;
+        }
 
-  .calc-btn:hover { background: #b5d4f4; }
-  .calc-btn:active { transform: scale(0.99); }
+            .calc-btn:hover {
+                background: #b5d4f4;
+            }
 
-  .error-box {
-    background: #fff0f0;
-    border: 0.5px solid #f5a0a0;
-    color: #a32d2d;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
-    margin-bottom: 1rem;
-    display: none;
-    line-height: 1.5;
-  }
+            .calc-btn:active {
+                transform: scale(0.99);
+            }
 
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-    gap: 8px;
-  }
+        .error-box {
+            background: #fff0f0;
+            border: 0.5px solid #f5a0a0;
+            color: #a32d2d;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            margin-bottom: 1rem;
+            display: none;
+            line-height: 1.5;
+        }
 
-  .res-item {
-    background: #f5f4f0;
-    border-radius: 8px;
-    padding: 11px 13px;
-  }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+            gap: 8px;
+        }
 
-  .res-label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 4px;
-  }
+        .res-item {
+            background: #f5f4f0;
+            border-radius: 8px;
+            padding: 11px 13px;
+        }
 
-  .res-val {
-    font-size: 16px;
-    font-weight: 500;
-    color: #1a1a1a;
-    font-family: 'Courier New', monospace;
-  }
+        .res-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 4px;
+        }
 
-  .res-unit {
-    font-size: 13px;
-    color: #888;
-    font-family: 'Courier New', monospace;
-  }
+        .res-val {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1a1a1a;
+            font-family: 'Courier New', monospace;
+        }
 
-  .res-sub {
-    font-size: 12px;
-    color: #888;
-    font-family: 'Courier New', monospace;
-    margin-top: 2px;
-  }
+        .res-unit {
+            font-size: 13px;
+            color: #888;
+            font-family: 'Courier New', monospace;
+        }
 
-  @media (max-width: 480px) {
-    .two-col { grid-template-columns: 1fr; }
-  }
-</style>
+        .res-sub {
+            font-size: 12px;
+            color: #888;
+            font-family: 'Courier New', monospace;
+            margin-top: 2px;
+        }
+
+        @media (max-width: 480px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -325,6 +340,46 @@
 </div>
 
 <script>
+    // 取得指定條件下的濕度比 (依賴 PsychroLib)
+    function getW(tdb, type, val, p) {
+        if (type === 'rh') return psychrolib.GetHumRatioFromRelHum(tdb, val / 100, p);
+        if (type === 'twb') return psychrolib.GetHumRatioFromTWetBulb(tdb, val, p);
+        if (type === 'tdp') return psychrolib.GetHumRatioFromTDewPoint(val, p);
+        if (type === 'w') return val;
+        return 0;
+    }
+
+    // 通用二分逼近法：求出乾球溫度
+    function solveTdb(t1, v1, t2, v2, p) {
+        let t_low = -40; // 運算下限
+        let t_high = 80; // 運算上限
+
+        // 定義誤差函數：兩種條件算出的水氣量差值
+        const f = (t) => {
+            try {
+                return getW(t, t1, v1, p) - getW(t, t2, v2, p);
+            } catch (e) {
+                // 若猜測溫度導致物理上不合理(如濕球大於乾球)，賦予極大誤差值迫使迴圈轉向
+                return 999;
+            }
+        };
+
+        // 執行二分法
+        for (let i = 0; i < 60; i++) {
+            let t_mid = (t_low + t_high) / 2;
+            let y_mid = f(t_mid);
+            let y_low = f(t_low);
+
+            if (Math.abs(y_mid) < 1e-6) return t_mid; // 找到精確解
+
+            if (y_mid * y_low > 0) {
+                t_low = t_mid;
+            } else {
+                t_high = t_mid;
+            }
+        }
+        return (t_low + t_high) / 2;
+    }
 const HINTS = {
   tdb: { unit: '°C',    hint: '乾球溫度：最常用的空氣溫度，一般溫度計量測值。範圍建議 -40 ~ 60 °C。' },
   rh:  { unit: '%',     hint: '相對濕度：空氣中水蒸氣含量與同溫飽和量的比值。範圍 0 ~ 100 %。' },
@@ -396,104 +451,78 @@ function dewPt(pw) {
   return tdp;
 }
 
-function calculate() {
-  hideError();
-  const p  = parseFloat(document.getElementById('pressure').value);
-  const t1 = document.getElementById('type1').value;
-  const v1 = parseFloat(document.getElementById('val1').value);
-  const t2 = document.getElementById('type2').value;
-  const v2 = parseFloat(document.getElementById('val2').value);
+    function calculate() {
+        hideError();
+        psychrolib.SetUnitSystem(psychrolib.SI); // 宣告使用 SI 公制單位
 
-  if (isNaN(p) || p <= 0)   { showError('大氣壓力必須大於 0 Pa'); return; }
-  if (isNaN(v1) || isNaN(v2)) { showError('請輸入有效數值'); return; }
-  if (t1 === t2)              { showError('請選擇兩個不同的空氣狀態參數！'); return; }
-  if (t1 !== 'tdb' && t2 !== 'tdb') { showError('兩個條件中必須有一項為乾球溫度 (Tdb)'); return; }
+        const p = parseFloat(document.getElementById('pressure').value);
+        const t1 = document.getElementById('type1').value;
+        const v1 = parseFloat(document.getElementById('val1').value);
+        const t2 = document.getElementById('type2').value;
+        const v2 = parseFloat(document.getElementById('val2').value);
 
-  const tdb = (t1 === 'tdb') ? v1 : v2;
-  const ot  = (t1 === 'tdb') ? t2 : t1;
-  const ov  = (t1 === 'tdb') ? v2 : v1;
-  const Mw  = 0.621945;
-  let W;
+        if (isNaN(p) || p <= 0) { showError('大氣壓力必須大於 0 Pa'); return; }
+        if (isNaN(v1) || isNaN(v2)) { showError('請輸入有效數值'); return; }
+        if (t1 === t2) { showError('請選擇兩個不同的空氣狀態參數！'); return; }
 
-try {
-    // 1. 處理輸入條件，算出濕度比 W
-    if (ot === 'rh') {
-      const rh_val = ov / 100;
-      if (rh_val < 0 || rh_val > 1) { showError('相對濕度必須在 0 ~ 100 之間'); return; }
-      W = Mw * (rh_val * satP(tdb)) / (p - rh_val * satP(tdb));
-    } else if (ot === 'twb') {
-      if (ov > tdb) { showError('物理限制：濕球溫度不可大於乾球溫度！'); return; }
-      const s = Mw * satP(ov) / (p - satP(ov));
-      // 【修正常數】：2.326 與 1.86 (ASHRAE SI 標準)
-      W = (((2501 - 2.326 * ov) * s) - 1.006 * (tdb - ov)) / (2501 + 1.86 * tdb - 4.186 * ov);
-    } else if (ot === 'tdp') {
-      if (ov > tdb) { showError('物理限制：露點溫度不可大於乾球溫度！'); return; }
-      W = Mw * satP(ov) / (p - satP(ov));
-    } else if (ot === 'w') {
-      if (ov < 0) { showError('濕度比不可為負數'); return; }
-      W = ov;
-    }
-
-    if (W < 0) { showError('計算結果濕度比為負，請確認輸入值是否合理（例如露點過低但環境氣壓異常）'); return; }
-
-    // 2. 計算其他狀態點
-    const pw  = p * W / (Mw + W);
-    const rh  = Math.min(100, pw / satP(tdb) * 100);
-    
-    // 【修正演算法】：使用二分逼近法(Bisection)計算濕球溫度，確保 100% 收斂
-    let twb = tdb;
-    if (rh < 100) {
-      let twb_low = -50;    // 設定合理下限
-      let twb_high = tdb;   // 濕球溫度最高等於乾球溫度
-      
-      for (let i = 0; i < 50; i++) {
-        twb = (twb_low + twb_high) / 2;
-        const s = Mw * satP(twb) / (p - satP(twb));
-        // 使用修正後的常數計算對應的 W 測試值
-        const W_calc = (((2501 - 2.326 * twb) * s) - 1.006 * (tdb - twb)) / (2501 + 1.86 * tdb - 4.186 * twb);
-        
-        if (W_calc > W) {
-          twb_high = twb; // 算出來的水氣太多，代表猜測的濕球溫度太高
-        } else {
-          twb_low = twb;  // 算出來的水氣太少，代表猜測的濕球溫度太低
+        // 阻擋特例：露點溫度與濕度比在物理上是直接關聯的，不能互作獨立條件
+        if ((t1 === 'tdp' && t2 === 'w') || (t1 === 'w' && t2 === 'tdp')) {
+            showError('露點溫度與濕度比為相依變數，請更改其中一個條件。');
+            return;
         }
-        // 當誤差小於 0.001 度時停止運算
-        if (Math.abs(twb_high - twb_low) < 1e-4) break; 
-      }
-    }
 
-    const tdp = dewPt(pw);
-    
-    // 【修正常數】：比焓公式水蒸氣比熱改為 1.86
-    const h   = 1.006 * tdb + W * (2501 + 1.86 * tdb); 
-    const v   = (0.287042 * (tdb + 273.15) * (1 + 1.607858 * W) / p) * 1000;
-    const pw_kpa = pw / 1000;
+        let tdb, w;
 
-    document.getElementById('res-label').textContent = `計算結果 — 大氣壓力 ${p.toFixed(0)} Pa`;
+        try {
+            // 階段一：獲取乾球溫度 (Tdb) 與 濕度比 (W)
+            if (t1 === 'tdb' || t2 === 'tdb') {
+                tdb = (t1 === 'tdb') ? v1 : v2;
+                let otherType = (t1 === 'tdb') ? t2 : t1;
+                let otherVal = (t1 === 'tdb') ? v2 : v1;
+                w = getW(tdb, otherType, otherVal, p);
+            } else {
+                // 若使用者沒提供乾球溫度，啟動反推引擎
+                tdb = solveTdb(t1, v1, t2, v2, p);
+                w = getW(tdb, t1, v1, p); // 算出 Tdb 後，取回真實的 W
+            }
 
-    const rows = [
-      { label: '乾球溫度 Tdb', val: tdb.toFixed(2),       unit: '°C',    sub: '' },
-      { label: '相對濕度 RH',  val: rh.toFixed(1),        unit: '%',     sub: '' },
-      { label: '濕球溫度 Twb', val: twb.toFixed(2),       unit: '°C',    sub: '' },
-      { label: '露點溫度 Tdp', val: tdp.toFixed(2),       unit: '°C',    sub: '' },
-      { label: '濕度比 W',     val: W.toFixed(5),         unit: 'kg/kg', sub: (W * 1000).toFixed(2) + ' g/kg' },
-      { label: '比焓 h',       val: h.toFixed(2),         unit: 'kJ/kg', sub: '' },
-      { label: '比容 v',       val: v.toFixed(4),         unit: 'm³/kg', sub: '' },
-      { label: '蒸氣分壓 Pw',  val: pw_kpa.toFixed(4),   unit: 'kPa',   sub: '' },
-    ];
+            if (w < 0 || w > 1) { showError('輸入條件導致不合理的物理狀態，請重新確認數值'); return; }
 
-    document.getElementById('results-grid').innerHTML = rows.map(r => `
+            // 階段二：有了 Tdb 和 W，讓 PsychroLib 算出所有剩下的數據
+            const twb = psychrolib.GetTWetBulbFromHumRatio(tdb, w, p);
+            const tdp = psychrolib.GetTDewPointFromHumRatio(tdb, w, p);
+            const rh = psychrolib.GetRelHumFromHumRatio(tdb, w, p) * 100;
+            const h = psychrolib.GetMoistAirEnthalpy(tdb, w) / 1000; // 轉為 kJ/kg
+            const v = psychrolib.GetMoistAirVolume(tdb, w, p);
+            const pw_kpa = psychrolib.GetVapPresFromHumRatio(w, p) / 1000; // 轉為 kPa
+
+            // 階段三：渲染結果
+            document.getElementById('res-label').textContent = `計算結果 — 大氣壓力 ${p.toFixed(0)} Pa`;
+
+            const rows = [
+                { label: '乾球溫度 Tdb', val: tdb.toFixed(2), unit: '°C', sub: '' },
+                { label: '相對濕度 RH', val: rh.toFixed(1), unit: '%', sub: '' },
+                { label: '濕球溫度 Twb', val: twb.toFixed(2), unit: '°C', sub: '' },
+                { label: '露點溫度 Tdp', val: tdp.toFixed(2), unit: '°C', sub: '' },
+                { label: '濕度比 W', val: w.toFixed(5), unit: 'kg/kg', sub: (w * 1000).toFixed(2) + ' g/kg' },
+                { label: '比焓 h', val: h.toFixed(2), unit: 'kJ/kg', sub: '' },
+                { label: '比容 v', val: v.toFixed(4), unit: 'm³/kg', sub: '' },
+                { label: '蒸氣分壓 Pw', val: pw_kpa.toFixed(4), unit: 'kPa', sub: '' },
+            ];
+
+            document.getElementById('results-grid').innerHTML = rows.map(r => `
       <div class="res-item">
         <div class="res-label">${r.label}</div>
         <div class="res-val">${r.val} <span class="res-unit">${r.unit}</span></div>
         ${r.sub ? `<div class="res-sub">${r.sub}</div>` : ''}
       </div>`).join('');
 
-    document.getElementById('results-wrap').style.display = 'block';
-  } catch(e) {
-    showError('計算錯誤：' + e.message);
-  }
-}
+            document.getElementById('results-wrap').style.display = 'block';
+
+        } catch (e) {
+            showError('計算錯誤或超出範圍：請確認輸入條件是否符合空氣物理極限 (例如高溫高濕)');
+        }
+    }
 </script>
 </body>
 </html>
