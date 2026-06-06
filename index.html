@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/psychrolib@2.3.0/psychrolib.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/psychrometrics/psychrolib@master/src/js/psychrolib.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASHRAE 空氣狀態計算器 by Andrew</title>
@@ -266,231 +266,248 @@
     </style>
 </head>
 <body>
-<div class="container">
-  <h1>ASHRAE 空氣狀態計算器 by 臣</h1>
-  <p class="subtitle">依據 ASHRAE 標準公式計算濕空氣熱力學性質</p>
+    <div class="container">
+        <h1>ASHRAE 空氣狀態計算器 by 臣</h1>
+        <p class="subtitle">依據 ASHRAE 標準公式計算濕空氣熱力學性質</p>
 
-  <div class="card">
-    <div class="section-label">環境壓力設定</div>
-    <div class="two-col">
-      <div>
-        <div class="field-label">海拔高度</div>
-        <div class="pres-row">
-          <input type="number" id="altitude" value="0" step="1">
-          <span class="pres-unit">m</span>
-          <button class="conv-btn" onclick="convertAltitude()">↻ 換算</button>
+        <div class="card">
+            <div class="section-label">環境壓力設定</div>
+            <div class="two-col">
+                <div>
+                    <div class="field-label">海拔高度</div>
+                    <div class="pres-row">
+                        <input type="number" id="altitude" value="0" step="1">
+                        <span class="pres-unit">m</span>
+                        <button class="conv-btn" onclick="convertAltitude()">↻ 換算</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="field-label">大氣壓力</div>
+                    <div class="pres-row">
+                        <input type="number" id="pressure" value="101325" step="1">
+                        <span class="pres-unit">Pa</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div>
-        <div class="field-label">大氣壓力</div>
-        <div class="pres-row">
-          <input type="number" id="pressure" value="101325" step="1">
-          <span class="pres-unit">Pa</span>
+
+        <div class="section-label" style="margin-bottom:10px">已知空氣狀態 — 請輸入任意兩個獨立條件</div>
+        <div class="two-col" style="margin-bottom:1.1rem">
+            <div class="param-block">
+                <div class="param-badge">條件 1</div>
+                <div class="field-label">選擇參數</div>
+                <select class="input-field" id="type1" onchange="onTypeChange(1)">
+                    <option value="tdb">乾球溫度 (Tdb)</option>
+                    <option value="rh">相對濕度 (RH)</option>
+                    <option value="twb">濕球溫度 (Twb)</option>
+                    <option value="tdp">露點溫度 (Tdp)</option>
+                    <option value="w">濕度比 (W)</option>
+                </select>
+                <div class="field-label">數值</div>
+                <div class="num-row">
+                    <input type="number" id="val1" value="25" step="0.1">
+                    <span class="unit-tag" id="unit1">°C</span>
+                </div>
+                <div class="hint-box" id="hint1">乾球溫度：最常用的空氣溫度，一般溫度計量測值。範圍建議 -40 ~ 60 °C。</div>
+            </div>
+            <div class="param-block">
+                <div class="param-badge">條件 2</div>
+                <div class="field-label">選擇參數</div>
+                <select class="input-field" id="type2" onchange="onTypeChange(2)">
+                    <option value="rh" selected>相對濕度 (RH)</option>
+                    <option value="tdb">乾球溫度 (Tdb)</option>
+                    <option value="twb">濕球溫度 (Twb)</option>
+                    <option value="tdp">露點溫度 (Tdp)</option>
+                    <option value="w">濕度比 (W)</option>
+                </select>
+                <div class="field-label">數值</div>
+                <div class="num-row">
+                    <input type="number" id="val2" value="50" step="0.1">
+                    <span class="unit-tag" id="unit2">%</span>
+                </div>
+                <div class="hint-box" id="hint2">相對濕度：空氣中水蒸氣含量與同溫飽和量的比值。範圍 0 ~ 100 %。</div>
+            </div>
         </div>
-      </div>
+
+        <div id="error-box" class="error-box"></div>
+
+        <button class="calc-btn" onclick="calculate()">執行 ASHRAE 標準計算</button>
+
+        <div id="results-wrap" style="display:none">
+            <div class="section-label" id="res-label" style="margin-bottom:10px">計算結果</div>
+            <div class="results-grid" id="results-grid"></div>
+        </div>
     </div>
-  </div>
 
-  <div class="section-label" style="margin-bottom:10px">已知空氣狀態 — 請輸入任意兩個獨立條件</div>
-  <div class="two-col" style="margin-bottom:1.1rem">
-    <div class="param-block">
-      <div class="param-badge">條件 1</div>
-      <div class="field-label">選擇參數</div>
-      <select class="input-field" id="type1" onchange="onTypeChange(1)">
-        <option value="tdb">乾球溫度 (Tdb)</option>
-        <option value="rh">相對濕度 (RH)</option>
-        <option value="twb">濕球溫度 (Twb)</option>
-        <option value="tdp">露點溫度 (Tdp)</option>
-        <option value="w">濕度比 (W)</option>
-      </select>
-      <div class="field-label">數值</div>
-      <div class="num-row">
-        <input type="number" id="val1" value="25" step="0.1">
-        <span class="unit-tag" id="unit1">°C</span>
-      </div>
-      <div class="hint-box" id="hint1">乾球溫度：最常用的空氣溫度，一般溫度計量測值。範圍建議 -40 ~ 60 °C。</div>
-    </div>
-    <div class="param-block">
-      <div class="param-badge">條件 2</div>
-      <div class="field-label">選擇參數</div>
-      <select class="input-field" id="type2" onchange="onTypeChange(2)">
-        <option value="rh" selected>相對濕度 (RH)</option>
-        <option value="tdb">乾球溫度 (Tdb)</option>
-        <option value="twb">濕球溫度 (Twb)</option>
-        <option value="tdp">露點溫度 (Tdp)</option>
-        <option value="w">濕度比 (W)</option>
-      </select>
-      <div class="field-label">數值</div>
-      <div class="num-row">
-        <input type="number" id="val2" value="50" step="0.1">
-        <span class="unit-tag" id="unit2">%</span>
-      </div>
-      <div class="hint-box" id="hint2">相對濕度：空氣中水蒸氣含量與同溫飽和量的比值。範圍 0 ~ 100 %。</div>
-    </div>
-  </div>
+    <script>
+        // 取得指定條件下的濕度比 (依賴 PsychroLib)
+        function getW(tdb, type, val, p) {
+            if (type === 'rh') return psychrolib.GetHumRatioFromRelHum(tdb, val / 100, p);
+            if (type === 'twb') return psychrolib.GetHumRatioFromTWetBulb(tdb, val, p);
+            if (type === 'tdp') return psychrolib.GetHumRatioFromTDewPoint(val, p);
+            if (type === 'w') return val;
+            return 0;
+        }
 
-  <div id="error-box" class="error-box"></div>
+        // 通用二分逼近法：求出乾球溫度 (高穩健度優化版)
+        function solveTdb(t1, v1, t2, v2, p) {
+            let t_low = -40; // 預設運算下限
+            let t_high = 80; // 預設運算上限
 
-  <button class="calc-btn" onclick="calculate()">執行 ASHRAE 標準計算</button>
+            // 物理防呆：乾球溫度絕對不可能低於已知的濕球或露點溫度
+            if (t1 === 'twb' || t1 === 'tdp') t_low = Math.max(t_low, v1);
+            if (t2 === 'twb' || t2 === 'tdp') t_low = Math.max(t_low, v2);
+            if (t_low >= t_high) t_high = t_low + 50;
 
-  <div id="results-wrap" style="display:none">
-    <div class="section-label" id="res-label" style="margin-bottom:10px">計算結果</div>
-    <div class="results-grid" id="results-grid"></div>
-  </div>
-</div>
+            // 定義誤差函數：兩種條件算出的水氣量差值
+            const f = (t) => {
+                // 【修正 2】內部加入 try...catch，避免在逼近極限時觸發 Psychrolib 報錯導致跳出
+                try {
+                    return getW(t, t1, v1, p) - getW(t, t2, v2, p);
+                } catch (e) {
+                    return 999;
+                }
+            };
 
-<script>
-    // 取得指定條件下的濕度比 (依賴 PsychroLib)
-    function getW(tdb, type, val, p) {
-        if (type === 'rh') return psychrolib.GetHumRatioFromRelHum(tdb, val / 100, p);
-        if (type === 'twb') return psychrolib.GetHumRatioFromTWetBulb(tdb, val, p);
-        if (type === 'tdp') return psychrolib.GetHumRatioFromTDewPoint(val, p);
-        if (type === 'w') return val;
-        return 0;
-    }
+            // 執行二分法
+            for (let i = 0; i < 60; i++) {
+                let t_mid = (t_low + t_high) / 2;
+                let y_mid = f(t_mid);
+                let y_low = f(t_low);
 
-    // 通用二分逼近法：求出乾球溫度 (高穩健度優化版)
-    function solveTdb(t1, v1, t2, v2, p) {
-        let t_low = -40; // 預設運算下限
-        let t_high = 80; // 預設運算上限
+                if (Math.abs(y_mid) < 1e-6) return t_mid; // 找到精確解
 
-        // 物理防呆：乾球溫度絕對不可能低於已知的濕球或露點溫度
-        if (t1 === 'twb' || t1 === 'tdp') t_low = Math.max(t_low, v1);
-        if (t2 === 'twb' || t2 === 'tdp') t_low = Math.max(t_low, v2);
-        if (t_low >= t_high) t_high = t_low + 50;
+                if (y_mid * y_low > 0) {
+                    t_low = t_mid;
+                } else {
+                    t_high = t_mid;
+                }
+            }
+            return (t_low + t_high) / 2;
+        }
 
-        // 定義誤差函數：兩種條件算出的水氣量差值
-        const f = (t) => {
-            return getW(t, t1, v1, p) - getW(t, t2, v2, p);
+        const HINTS = {
+            tdb: { unit: '°C', hint: '乾球溫度：最常用的空氣溫度，一般溫度計量測值。範圍建議 -40 ~ 60 °C。' },
+            rh: { unit: '%', hint: '相對濕度：空氣中水蒸氣含量與同溫飽和量的比值。範圍 0 ~ 100 %。' },
+            twb: { unit: '°C', hint: '濕球溫度：濕紗布包裹的溫度計示值，恆小於等於乾球溫度。' },
+            tdp: { unit: '°C', hint: '露點溫度：空氣冷卻至開始凝結水珠的溫度，恆小於等於乾球溫度。' },
+            w: { unit: 'kg/kg', hint: '濕度比（絕對濕度）：每公斤乾空氣中含有的水蒸氣質量，典型值 0.005 ~ 0.025 kg/kg。' }
         };
 
-        // 執行二分法
-        for (let i = 0; i < 60; i++) {
-            let t_mid = (t_low + t_high) / 2;
-            let y_mid = f(t_mid);
-            let y_low = f(t_low);
+        function onTypeChange(n) {
+            const t1 = document.getElementById('type1').value;
+            const t2 = document.getElementById('type2').value;
+            if (t1 === t2) {
+                const opts = ['tdb', 'rh', 'twb', 'tdp', 'w'];
+                const other = 'type' + (n === 1 ? 2 : 1);
+                const cur = n === 1 ? t1 : t2;
+                document.getElementById(other).value = opts.find(o => o !== cur);
+                updateHU(n === 1 ? 2 : 1);
+            }
+            updateHU(n);
+        }
 
-            if (Math.abs(y_mid) < 1e-6) return t_mid; // 找到精確解
+        function updateHU(n) {
+            const t = document.getElementById('type' + n).value;
+            document.getElementById('unit' + n).textContent = HINTS[t].unit;
+            document.getElementById('hint' + n).textContent = HINTS[t].hint;
+        }
 
-            if (y_mid * y_low > 0) {
-                t_low = t_mid;
-            } else {
-                t_high = t_mid;
+        function convertAltitude() {
+            const alt = parseFloat(document.getElementById('altitude').value) || 0;
+            document.getElementById('pressure').value = (101325 * Math.pow(1 - 2.25577e-5 * alt, 5.25588)).toFixed(1);
+        }
+
+        function showError(msg) {
+            const b = document.getElementById('error-box');
+            b.textContent = msg; b.style.display = 'block';
+            document.getElementById('results-wrap').style.display = 'none';
+        }
+
+        function hideError() {
+            document.getElementById('error-box').style.display = 'none';
+        }
+
+        function calculate() {
+            hideError();
+
+            // 【修正 3】將所有邏輯（包含載入檢查）全數放入 try...catch 中，確保不再無聲當機
+            try {
+                // 安全檢查：確保 PsychroLib 已經成功載入
+                if (typeof psychrolib === 'undefined') {
+                    throw new Error("ASHRAE 核心函式庫尚未載入完成！請檢查網路連線或稍後再試。");
+                }
+
+                psychrolib.SetUnitSystem(psychrolib.SI); // 宣告使用 SI 公制單位
+
+                const p = parseFloat(document.getElementById('pressure').value);
+                const t1 = document.getElementById('type1').value;
+                const v1 = parseFloat(document.getElementById('val1').value);
+                const t2 = document.getElementById('type2').value;
+                const v2 = parseFloat(document.getElementById('val2').value);
+
+                if (isNaN(p) || p <= 0) { showError('大氣壓力必須大於 0 Pa'); return; }
+                if (isNaN(v1) || isNaN(v2)) { showError('請輸入有效數值'); return; }
+                if (t1 === t2) { showError('請選擇兩個不同的空氣狀態參數！'); return; }
+
+                // 阻擋特例：露點溫度與濕度比在物理上是直接關聯的，不能互作獨立條件
+                if ((t1 === 'tdp' && t2 === 'w') || (t1 === 'w' && t2 === 'tdp')) {
+                    showError('露點溫度與濕度比為相依變數，請更改其中一個條件。');
+                    return;
+                }
+
+                let tdb, w;
+
+                // 階段一：獲取乾球溫度 (Tdb) 與 濕度比 (W)
+                if (t1 === 'tdb' || t2 === 'tdb') {
+                    tdb = (t1 === 'tdb') ? v1 : v2;
+                    let otherType = (t1 === 'tdb') ? t2 : t1;
+                    let otherVal = (t1 === 'tdb') ? v2 : v1;
+                    w = getW(tdb, otherType, otherVal, p);
+                } else {
+                    // 若使用者沒提供乾球溫度，啟動反推引擎
+                    tdb = solveTdb(t1, v1, t2, v2, p);
+                    w = getW(tdb, t1, v1, p); // 算出 Tdb 後，取回真實的 W
+                }
+
+                if (w < 0 || w > 1) { showError('輸入條件導致不合理的物理狀態，請重新確認數值'); return; }
+
+                // 階段二：有了 Tdb 和 W，讓 PsychroLib 算出所有剩下的數據
+                const twb = psychrolib.GetTWetBulbFromHumRatio(tdb, w, p);
+                const tdp = psychrolib.GetTDewPointFromHumRatio(tdb, w, p);
+                const rh = psychrolib.GetRelHumFromHumRatio(tdb, w, p) * 100;
+                const h = psychrolib.GetMoistAirEnthalpy(tdb, w) / 1000; // 轉為 kJ/kg
+                const v = psychrolib.GetMoistAirVolume(tdb, w, p);
+                const pw_kpa = psychrolib.GetVapPresFromHumRatio(w, p) / 1000; // 轉為 kPa
+
+                // 階段三：渲染結果
+                document.getElementById('res-label').textContent = `計算結果 — 大氣壓力 ${p.toFixed(0)} Pa`;
+
+                const rows = [
+                    { label: '乾球溫度 Tdb', val: tdb.toFixed(2), unit: '°C', sub: '' },
+                    { label: '相對濕度 RH', val: rh.toFixed(1), unit: '%', sub: '' },
+                    { label: '濕球溫度 Twb', val: twb.toFixed(2), unit: '°C', sub: '' },
+                    { label: '露點溫度 Tdp', val: tdp.toFixed(2), unit: '°C', sub: '' },
+                    { label: '濕度比 W', val: w.toFixed(5), unit: 'kg/kg', sub: (w * 1000).toFixed(2) + ' g/kg' },
+                    { label: '比焓 h', val: h.toFixed(2), unit: 'kJ/kg', sub: '' },
+                    { label: '比容 v', val: v.toFixed(4), unit: 'm³/kg', sub: '' },
+                    { label: '蒸氣分壓 Pw', val: pw_kpa.toFixed(4), unit: 'kPa', sub: '' },
+                ];
+
+                document.getElementById('results-grid').innerHTML = rows.map(r => `
+          <div class="res-item">
+            <div class="res-label">${r.label}</div>
+            <div class="res-val">${r.val} <span class="res-unit">${r.unit}</span></div>
+            ${r.sub ? `<div class="res-sub">${r.sub}</div>` : ''}
+          </div>`).join('');
+
+                document.getElementById('results-wrap').style.display = 'block';
+
+            } catch (e) {
+                // 【修正 4】捕捉所有錯誤並明確印在畫面上，方便立刻發現問題
+                showError('系統運算錯誤：' + e.message);
             }
         }
-        return (t_low + t_high) / 2;
-    }
-const HINTS = {
-  tdb: { unit: '°C',    hint: '乾球溫度：最常用的空氣溫度，一般溫度計量測值。範圍建議 -40 ~ 60 °C。' },
-  rh:  { unit: '%',     hint: '相對濕度：空氣中水蒸氣含量與同溫飽和量的比值。範圍 0 ~ 100 %。' },
-  twb: { unit: '°C',    hint: '濕球溫度：濕紗布包裹的溫度計示值，恆小於等於乾球溫度。' },
-  tdp: { unit: '°C',    hint: '露點溫度：空氣冷卻至開始凝結水珠的溫度，恆小於等於乾球溫度。' },
-  w:   { unit: 'kg/kg', hint: '濕度比（絕對濕度）：每公斤乾空氣中含有的水蒸氣質量，典型值 0.005 ~ 0.025 kg/kg。' }
-};
-
-function onTypeChange(n) {
-  const t1 = document.getElementById('type1').value;
-  const t2 = document.getElementById('type2').value;
-  if (t1 === t2) {
-    const opts = ['tdb','rh','twb','tdp','w'];
-    const other = 'type' + (n === 1 ? 2 : 1);
-    const cur = n === 1 ? t1 : t2;
-    document.getElementById(other).value = opts.find(o => o !== cur);
-    updateHU(n === 1 ? 2 : 1);
-  }
-  updateHU(n);
-}
-
-function updateHU(n) {
-  const t = document.getElementById('type' + n).value;
-  document.getElementById('unit' + n).textContent = HINTS[t].unit;
-  document.getElementById('hint' + n).textContent = HINTS[t].hint;
-}
-
-function convertAltitude() {
-  const alt = parseFloat(document.getElementById('altitude').value) || 0;
-  document.getElementById('pressure').value = (101325 * Math.pow(1 - 2.25577e-5 * alt, 5.25588)).toFixed(1);
-}
-
-function showError(msg) {
-  const b = document.getElementById('error-box');
-  b.textContent = msg; b.style.display = 'block';
-  document.getElementById('results-wrap').style.display = 'none';
-}
-function hideError() { document.getElementById('error-box').style.display = 'none'; }
-
-    function calculate() {
-        hideError();
-        psychrolib.SetUnitSystem(psychrolib.SI); // 宣告使用 SI 公制單位
-
-        const p = parseFloat(document.getElementById('pressure').value);
-        const t1 = document.getElementById('type1').value;
-        const v1 = parseFloat(document.getElementById('val1').value);
-        const t2 = document.getElementById('type2').value;
-        const v2 = parseFloat(document.getElementById('val2').value);
-
-        if (isNaN(p) || p <= 0) { showError('大氣壓力必須大於 0 Pa'); return; }
-        if (isNaN(v1) || isNaN(v2)) { showError('請輸入有效數值'); return; }
-        if (t1 === t2) { showError('請選擇兩個不同的空氣狀態參數！'); return; }
-
-        // 阻擋特例：露點溫度與濕度比在物理上是直接關聯的，不能互作獨立條件
-        if ((t1 === 'tdp' && t2 === 'w') || (t1 === 'w' && t2 === 'tdp')) {
-            showError('露點溫度與濕度比為相依變數，請更改其中一個條件。');
-            return;
-        }
-
-        let tdb, w;
-
-        try {
-            // 階段一：獲取乾球溫度 (Tdb) 與 濕度比 (W)
-            if (t1 === 'tdb' || t2 === 'tdb') {
-                tdb = (t1 === 'tdb') ? v1 : v2;
-                let otherType = (t1 === 'tdb') ? t2 : t1;
-                let otherVal = (t1 === 'tdb') ? v2 : v1;
-                w = getW(tdb, otherType, otherVal, p);
-            } else {
-                // 若使用者沒提供乾球溫度，啟動反推引擎
-                tdb = solveTdb(t1, v1, t2, v2, p);
-                w = getW(tdb, t1, v1, p); // 算出 Tdb 後，取回真實的 W
-            }
-
-            if (w < 0 || w > 1) { showError('輸入條件導致不合理的物理狀態，請重新確認數值'); return; }
-
-            // 階段二：有了 Tdb 和 W，讓 PsychroLib 算出所有剩下的數據
-            const twb = psychrolib.GetTWetBulbFromHumRatio(tdb, w, p);
-            const tdp = psychrolib.GetTDewPointFromHumRatio(tdb, w, p);
-            const rh = psychrolib.GetRelHumFromHumRatio(tdb, w, p) * 100;
-            const h = psychrolib.GetMoistAirEnthalpy(tdb, w) / 1000; // 轉為 kJ/kg
-            const v = psychrolib.GetMoistAirVolume(tdb, w, p);
-            const pw_kpa = psychrolib.GetVapPresFromHumRatio(w, p) / 1000; // 轉為 kPa
-
-            // 階段三：渲染結果
-            document.getElementById('res-label').textContent = `計算結果 — 大氣壓力 ${p.toFixed(0)} Pa`;
-
-            const rows = [
-                { label: '乾球溫度 Tdb', val: tdb.toFixed(2), unit: '°C', sub: '' },
-                { label: '相對濕度 RH', val: rh.toFixed(1), unit: '%', sub: '' },
-                { label: '濕球溫度 Twb', val: twb.toFixed(2), unit: '°C', sub: '' },
-                { label: '露點溫度 Tdp', val: tdp.toFixed(2), unit: '°C', sub: '' },
-                { label: '濕度比 W', val: w.toFixed(5), unit: 'kg/kg', sub: (w * 1000).toFixed(2) + ' g/kg' },
-                { label: '比焓 h', val: h.toFixed(2), unit: 'kJ/kg', sub: '' },
-                { label: '比容 v', val: v.toFixed(4), unit: 'm³/kg', sub: '' },
-                { label: '蒸氣分壓 Pw', val: pw_kpa.toFixed(4), unit: 'kPa', sub: '' },
-            ];
-
-            document.getElementById('results-grid').innerHTML = rows.map(r => `
-      <div class="res-item">
-        <div class="res-label">${r.label}</div>
-        <div class="res-val">${r.val} <span class="res-unit">${r.unit}</span></div>
-        ${r.sub ? `<div class="res-sub">${r.sub}</div>` : ''}
-      </div>`).join('');
-
-            document.getElementById('results-wrap').style.display = 'block';
-
-        } catch (e) {
-            showError('計算錯誤或超出範圍：請確認輸入條件是否符合空氣物理極限 (例如高溫高濕)');
-        }
-    }
-</script>
+    </script>
 </body>
 </html>
