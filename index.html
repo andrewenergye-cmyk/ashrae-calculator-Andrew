@@ -291,7 +291,7 @@
     </div>
   </div>
 
-  <div class="section-label" style="margin-bottom:10px">已知空氣狀態 — 兩個條件中必須包含乾球溫度</div>
+  <div class="section-label" style="margin-bottom:10px">已知空氣狀態 — 請輸入任意兩個獨立條件</div>
   <div class="two-col" style="margin-bottom:1.1rem">
     <div class="param-block">
       <div class="param-badge">條件 1</div>
@@ -349,19 +349,19 @@
         return 0;
     }
 
-    // 通用二分逼近法：求出乾球溫度
+    // 通用二分逼近法：求出乾球溫度 (高穩健度優化版)
     function solveTdb(t1, v1, t2, v2, p) {
-        let t_low = -40; // 運算下限
-        let t_high = 80; // 運算上限
+        let t_low = -40; // 預設運算下限
+        let t_high = 80; // 預設運算上限
+
+        // 物理防呆：乾球溫度絕對不可能低於已知的濕球或露點溫度
+        if (t1 === 'twb' || t1 === 'tdp') t_low = Math.max(t_low, v1);
+        if (t2 === 'twb' || t2 === 'tdp') t_low = Math.max(t_low, v2);
+        if (t_low >= t_high) t_high = t_low + 50;
 
         // 定義誤差函數：兩種條件算出的水氣量差值
         const f = (t) => {
-            try {
-                return getW(t, t1, v1, p) - getW(t, t2, v2, p);
-            } catch (e) {
-                // 若猜測溫度導致物理上不合理(如濕球大於乾球)，賦予極大誤差值迫使迴圈轉向
-                return 999;
-            }
+            return getW(t, t1, v1, p) - getW(t, t2, v2, p);
         };
 
         // 執行二分法
